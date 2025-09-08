@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>觀看直播 - WebRTC Live</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            height: calc(100vh - 80px);
+        }
+        
+        .video-section {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stream-video {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stream-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+        
+        .stream-info-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stream-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        
+        .stream-status {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .chat-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .viewer-counter {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            
+            /* 美化滾動條 */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent; /* Firefox */
+        }
+        
+        /* Webkit 瀏覽器滾動條樣式 (Chrome, Safari, Edge) */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .chat-messages::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+        
+        .message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.8rem;
+            border-radius: 15px;
+            color: white;
+            animation: messageSlide 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .message .username {
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 0.2rem;
+            display: block;
+        }
+        
+        .message .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            float: right;
+        }
+        
+        .chat-input {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.8rem;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-input input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-dot.connected {
+            background: #4ecdc4;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+        
+        .status-dot.connecting {
+            background: #ffa726;
+            animation: blink 1s infinite;
+        }
+        
+        .status-dot.disconnected {
+            background: #ef5350;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        @media (max-width: 768px) {
+            .viewer-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+                height: auto;
+                gap: 1rem;
+            }
+            
+            .chat-section {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            📺 觀看直播
+        </div>
+        <div class="nav-controls">
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-dot disconnected" id="statusDot"></div>
+                <span id="statusText">未連接</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="viewer-container">
+        <div class="video-section">
+            <div class="stream-video" id="streamVideo">
+                <div id="videoPlaceholder">
+                    <div style="text-align: center;">
+                        <h3>📺 等待主播開始直播</h3>
+                        <p>主播上線後，直播畫面會自動顯示在這裡</p>
+                    </div>
+                </div>
+                <video id="remoteVideo" autoplay playsinline style="display: none;"></video>
+                <div class="stream-info-overlay" id="streamInfo" style="display: none;">
+                    <div class="stream-title" id="streamTitle">直播中</div>
+                    <div class="stream-status" id="streamStatus">正在觀看</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="chat-header">
+                💬 即時聊天室
+                <div class="viewer-counter">
+                    👥 <span id="chatViewerCount">0</span>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message" style="background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.3);">
+                    <span class="username">系統</span>
+                    <span class="timestamp">剛剛</span>
+                    歡迎來到直播間！等待主播開始直播...
+                </div>
+            </div>
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="說點什麼..." onkeypress="handleEnter(event)">
+                    <button class="btn btn-live" onclick="sendMessage()">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="viewer.js"></script>
+</body>
+</html>

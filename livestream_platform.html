@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC 直播平台</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            📹 WebRTC Live
+        </div>
+        <div class="nav-controls">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">離線</span>
+            </div>
+            <button class="btn btn-live" id="streamBtn" onclick="toggleStream()">
+                🔴 開始直播
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="stream-section">
+            <div class="video-container">
+                <div class="video-preview" id="videoPreview">
+                    <video id="localVideo" autoplay muted playsinline style="display: none;"></video>
+                    <div id="previewPlaceholder">
+                        <div style="text-align: center;">
+                            <h3>📹 準備開始直播</h3>
+                            <p>點擊「開始直播」來啟動攝影機</p>
+                        </div>
+                    </div>
+                    <div class="video-overlay">
+                        <div>🔴 直播中</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">畫質: <span id="currentQuality">720p</span></div>
+                    </div>
+                </div>
+                <div class="quality-selector">
+                    <select id="qualitySelect" onchange="changeQuality()">
+                        <option value="480">480p</option>
+                        <option value="720" selected>720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+                <div class="stream-controls">
+                    <div class="control-group">
+                        <button class="btn btn-primary" onclick="toggleVideo()" id="videoBtn">
+                            📹 關閉視訊
+                        </button>
+                        <button class="btn btn-primary" onclick="toggleAudio()" id="audioBtn">
+                            🎤 關閉音訊
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn btn-primary" onclick="switchCamera()" id="cameraBtn">
+                            🔄 切換鏡頭
+                        </button>
+                        <button class="btn btn-primary" onclick="shareScreen()" id="screenBtn">
+                            🖥️ 分享螢幕
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn btn-primary" onclick="takeScreenshot()">
+                            📸 截圖
+                        </button>
+                        <button class="btn btn-primary" onclick="toggleFullscreen()">
+                            ⛶ 全螢幕
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stream-info">
+                <div class="stream-title" id="streamTitle">我的直播間</div>
+                <div class="stream-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="viewerCount">0</div>
+                        <div class="stat-label">觀看人數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="duration">00:00</div>
+                        <div class="stat-label">直播時長</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="messageCount">0</div>
+                        <div class="stat-label">聊天訊息</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="dataRate">0 KB/s</div>
+                        <div class="stat-label">傳輸速率</div>
+                    </div>
+                </div>
+
+                <div class="device-selection">
+                    <label>攝影機選擇</label>
+                    <select id="cameraSelect" onchange="switchVideoDevice()">
+                        <option>正在載入攝影機...</option>
+                    </select>
+                </div>
+
+                <div class="device-selection">
+                    <label>麥克風選擇</label>
+                    <select id="microphoneSelect" onchange="switchAudioDevice()">
+                        <option>正在載入麥克風...</option>
+                    </select>
+                </div>
+
+                <div class="device-selection">
+                    <label>音訊輸出端選擇</label>
+                    <select id="audioOutputSelect" onchange="switchAudioOutput()">
+                        <option>正在載入音訊輸出端...</option>
+                    </select>
+                    <button class="btn btn-small" onclick="testAudioOutput()" style="margin-left: 10px; padding: 5px 10px; font-size: 12px;">
+                        🔊 測試
+                    </button>
+                    <button class="btn btn-small" onclick="checkAudioOutputStatus()" style="margin-left: 5px; padding: 5px 10px; font-size: 12px;">
+                        📊 狀態
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="chat-header">
+                💬 即時聊天室
+                <div class="viewer-counter">
+                    👥 <span id="chatViewerCount">0</span>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    <span class="username">系統</span>
+                    <span class="timestamp">剛剛</span>
+                    歡迎來到直播間！開始你的直播之旅吧 🚀
+                </div>
+            </div>
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="說點什麼..." onkeypress="handleEnter(event)">
+                    <button class="btn btn-live" onclick="sendMessage()">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
